@@ -1,19 +1,19 @@
 const Gameboard = (() => {
     const board = [];
-    let k = 1;
     
+
     for (let i = 0; i < 3; i++) {
         board[i] = [];
         for (let j = 0; j < 3; j++){
-            board[i].push({token: null, index: k});
-            k++;
+            board[i].push(null);
+            
         }
     }
 
     const getBoard = () => board;
 
     const addToken = (row, column, player) => {
-        board[row][column].token = player.getToken()
+        board[row][column] = player.getToken()
     }
 
     return {getBoard, addToken}
@@ -29,8 +29,9 @@ const Player = (player, token) => {
 
 const GameController = ((playerOne = 'Player 1', playerTwo = 'Player 2') => {
     const board = Gameboard;
+    const boardArray = board.getBoard()
 
-    const players = [Player(playerOne, 1), Player(playerTwo, 2)];
+    const players = [Player(playerOne, 'X'), Player(playerTwo, 'O')];
 
     let selectedPlayer = players[0];
     let moveCount = 0;
@@ -40,18 +41,17 @@ const GameController = ((playerOne = 'Player 1', playerTwo = 'Player 2') => {
         const row = parseInt(prompt('Select Row:'))
         const column = parseInt(prompt('Select Column'))
 
-        if (board.getBoard()[row][column].token != null) {
+        if (boardArray[row][column] != null) {
             console.log('Invalid Move. Try Again');
         } else {
             board.addToken(row, column, selectedPlayer);
             moveCount += 1;
             switchPlayers();
-            console.log(`You're next ${selectedPlayer.getPlayer()}`);
         }
         
-        if (moveCount >= 6) {checkWinner()}
+        if (moveCount >= 5) {checkGame()}
 
-        return board.getBoard()
+        return boardArray
     }
 
     const switchPlayers = () => {
@@ -60,17 +60,30 @@ const GameController = ((playerOne = 'Player 1', playerTwo = 'Player 2') => {
         } else {selectedPlayer = players[0]}
     }
 
-    const checkWinner = () => {
-        
+    //Check all 3-index groups to see if all values are same//
+    const checkGame = () => {
+        return checkWinner(boardArray[0][0], boardArray[0][1], boardArray[0][2])
+            || checkWinner(boardArray[1][0], boardArray[1][1], boardArray[1][2])
+            || checkWinner(boardArray[2][0], boardArray[2][1], boardArray[2][2])
+            || checkWinner(boardArray[0][0], boardArray[1][0], boardArray[2][0])
+            || checkWinner(boardArray[0][1], boardArray[1][1], boardArray[2][1])
+            || checkWinner(boardArray[0][2], boardArray[1][2], boardArray[2][2])
+            || checkWinner(boardArray[0][0], boardArray[1][1], boardArray[2][2])
+            || checkWinner(boardArray[0][2], boardArray[1][1], boardArray[2][0])
+            || checkTie()
     }
 
     const checkTie = () => {
         for (let i = 0; i < 3; i++) {
             for (let j = 0; j < 3; j++) {
-                if (board[i][j] === null) return
+                if (boardArray[i][j] === null) return
             }
         }
         console.log('Tie')
+    }
+
+    const checkWinner = (i1, i2, i3) => {
+        if (i1 != null && i1 === i2 && i2 === i3) {return console.log(`${i1} Wins!`)}
     }
 
     return {playRound}
