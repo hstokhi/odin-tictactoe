@@ -2,22 +2,27 @@ const Gameboard = (() => {
     const board = [];
     
 
-    for (let i = 0; i < 3; i++) {
+    const resetBoard = () => {
+        for (let i = 0; i < 3; i++) {
         board[i] = [];
         for (let j = 0; j < 3; j++){
             board[i].push(null);
-            
         }
-    }
+    }}
 
     const getBoard = () => board;
 
     const addToken = (row, column, player) => {
-        board[row][column] = player.getToken()
+        board[row][column] = player//.getToken()//
     }
+    
+    resetBoard()
 
-    return {getBoard, addToken}
+    return {getBoard, addToken, resetBoard}
 })()
+
+
+
 
 const Player = (player, token) => {
     const getPlayer = () => player;
@@ -27,7 +32,10 @@ const Player = (player, token) => {
     return {getPlayer, getToken}
 }
 
-const GameController = ((playerOne = 'Player 1', playerTwo = 'Player 2') => {
+
+
+
+const GameController = ((playerOne, playerTwo) => {
     const board = Gameboard;
     const boardArray = board.getBoard()
 
@@ -36,10 +44,9 @@ const GameController = ((playerOne = 'Player 1', playerTwo = 'Player 2') => {
     let selectedPlayer = players[0];
     let moveCount = 0;
 
-    const playRound = () => {
-        console.log(`Your turn ${selectedPlayer.getPlayer()}`)
-        const row = parseInt(prompt('Select Row:'))
-        const column = parseInt(prompt('Select Column'))
+    const playRound = (location) => {
+        const row = location[0];
+        const column = location[1];
 
         if (boardArray[row][column] != null) {
             console.log('Invalid Move. Try Again');
@@ -50,8 +57,8 @@ const GameController = ((playerOne = 'Player 1', playerTwo = 'Player 2') => {
         }
         
         if (moveCount >= 5) {checkGame()}
-
-        return boardArray
+        DisplayController.displayBoard()
+        console.log(boardArray)
     }
 
     const switchPlayers = () => {
@@ -79,12 +86,70 @@ const GameController = ((playerOne = 'Player 1', playerTwo = 'Player 2') => {
                 if (boardArray[i][j] === null) return
             }
         }
-        console.log('Tie')
+        DisplayController.message.textContent = "Tie"
+        DisplayController.removeListener(row, column)
     }
 
     const checkWinner = (i1, i2, i3) => {
-        if (i1 != null && i1 === i2 && i2 === i3) {return console.log(`${i1} Wins!`)}
+        if (i1 != null && i1 === i2 && i2 === i3) {
+            DisplayController.message.textContent = `${i1.getPlayer()} Wins!`;
+            DisplayController.removeListener(row, column);
+        }//return console.log(`${i1} Wins!`)//
     }
 
-    return {playRound}
+    return {playRound, players}
+})('Player 1', 'Player 2')
+
+
+
+
+const DisplayController = (() => {
+    const board = Gameboard.getBoard()
+
+    const gameContainer = document.querySelector('.game-container')
+
+    const message = document.querySelector('.message-container')
+
+    const removeListener = (row, column) => {
+        document.querySelector(`[data-row="${row}][data-column="${column}"]`).removeEventListener('click', () => {listenerFunction(row, column)})
+    }
+
+    const displayBoard = () => {
+
+        clear(gameContainer)
+
+        for (let row = 0; row < 3; row++) {
+            for (let column = 0; column < 3; column++) {
+                const div = document.createElement('div')
+                div.classList.add('game-cell')
+                div.dataset.row = row;
+                div.dataset.column = column;
+                (board[row][column] != null) ? div.textContent = board[row][column].getToken() : div.textContent = '';
+                gameContainer.appendChild(div)
+                div.addEventListener('click', () => {listenerFunction(row, column)}, {once : true})
+            }
+        }
+    }
+
+    const listenerFunction = (row, column) => {
+        GameController.playRound([row, column])
+    }
+
+    const clear = (element) => {
+        while (element.firstChild) {
+            element.removeChild(element.firstChild)
+        }
+    }
+
+    document.querySelector('#start').addEventListener('click', () => {
+        message.textContent = 'Your turn Player 1'
+        Gameboard.resetBoard();
+        displayBoard();
+    })
+
+    document.querySelector('#restart').addEventListener('click', () => {
+        
+    })
+
+    return {displayBoard, removeListener, message}
 })()
